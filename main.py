@@ -20,14 +20,18 @@ def get_sidebar_links(page):
 def collect_random_youtube_links(start_url, max_iterations=25, time_delay=0.5):
     urls = set()
     current_url = start_url
+
     with sync_playwright() as p:
         browser = p.chromium.launch(headless=True)
-        context = browser.new_context()
+        context = browser.new_context( # Sets a user agent
+            user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
+        )
         page = context.new_page()
+
         for i in range(max_iterations):
             print(f"({i + 1}/{max_iterations}) Collecting links from {current_url}...")
             try:
-                page.goto(current_url, timeout=10000)
+                page.goto(current_url, timeout=15000, wait_until='domcontentloaded')
                 new_links = get_sidebar_links(page)
                 print(f" Found {len(new_links)} links.")
 
@@ -52,21 +56,8 @@ if __name__ == "__main__":
         collected_urls = collect_random_youtube_links(start_url)
         amount_of_links = len(collected_urls)
         db.save_link(collected_urls, amount_of_links)
-
-
-    # print("\nCollected URLs: ")
-    #for url in collected_urls:
-        #print(url)
-
-    # links = []
-    # link = grab_link()
-    # while len(links) < 10:
-        # new_link = os.system("yt-dlp -g " + link)
-        # links.append(new_link)
-    # for link in links
-        # send_command(link)
-    # link = grab_link()
-    # send_command(link)
+        print("\n--- Loop finished. Starting new loop in 10 seconds. ---\n")
+        time.sleep(10)
 
 
 
