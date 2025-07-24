@@ -1,10 +1,13 @@
 import asyncio
 import re
+
+import clean_links
 import db
 
 from db import grab_link
 from playwright.async_api import async_playwright, TimeoutError
 
+cleaned_links = []
 
 async def scrape_youtube_links(url: str):
     async with async_playwright() as p:
@@ -43,16 +46,22 @@ async def scrape_youtube_links(url: str):
 async def main():
     while True:
         try:
-            url = grab_link()
+            video_id = grab_link()
+            url = "https://www.youtube.com/watch?v=" + video_id
             links = await scrape_youtube_links(url)
-            amount_of_links = len(links)
             for x in links:
+                clean_link = clean_links.extract_youtube_id(x)
+                cleaned_links.append(clean_link)
+            final_links = list(set(cleaned_links))
+            amount_of_links = len(final_links)
+            for x in final_links:
                 print(x)
-            db.save_link(links, amount_of_links)
-            await asyncio.sleep(3)
+            db.save_link(final_links, amount_of_links)
+            cleaned_links.clear()
+            await asyncio.sleep(0.1)
         except Exception as e:
             print(f"Error in main loop: {str(e)}")
-            await asyncio.sleep(3)
+            await asyncio.sleep(0.1)
 
 
 if __name__ == "__main__":
